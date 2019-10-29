@@ -9,12 +9,48 @@
                 <v-list-item-content>
                   <div class="overline mb-4">Conta</div>
                   <v-list-item-title class="headline mb-1">Perfil</v-list-item-title>
-                  <v-list-item-subtitle v-if="eContratada">Contratada</v-list-item-subtitle>
-                  <v-list-item-subtitle v-if="eContratante">Contratante</v-list-item-subtitle>
-                  <v-list-item-subtitle v-if="eTecnicoContratada">Técnico (Contratada)</v-list-item-subtitle>
-                  <v-list-item-subtitle v-if="eTecnicoContratante">Técnico (Contratante)</v-list-item-subtitle>
-                  <v-list-item-subtitle v-if="eArbitro">Árbitro</v-list-item-subtitle>
+                  <v-list-item-subtitle v-if="enderecos.carregado"> {{this.identificarEndereco(account.publicKey)}}</v-list-item-subtitle>
                   <v-list-item-subtitle>{{account.publicKey}}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-card>
+            <br />
+          </v-flex>
+          <v-flex sm12>
+            <v-card>
+              <v-list-item three-line>
+                <v-list-item-content>
+                  <div class="overline mb-4">Contrato</div>
+                  <v-list-item-title class="headline mb-1">Estado Atual</v-list-item-title>
+                  <div v-if="contratoEncerrado">
+                    <v-alert type="error" v-if="parcelaAtual.status === '0' && parcelaAtual.medicaoPor !== this.zero && parcelaAtual.aprovadoPor === this.zero && parcelaAtual.reprovadoPor !== this.zero">
+                      CONTRATO ENCERRADO
+                    </v-alert>
+                  </div>
+                  <div v-if="!contratoEncerrado">
+                    <v-alert type="success" v-if="parcelaAtual.status === '2'">
+                      AGUARDANDO ABERTURA
+                    </v-alert>
+                    <v-alert type="info" v-if="parcelaAtual.status === '0' && parcelaAtual.medicaoPor === this.zero">
+                      AGUARDANDO MEDIÇÃO
+                    </v-alert>
+                    <v-alert type="warning" v-if="parcelaAtual.status === '0' && parcelaAtual.medicaoPor !== this.zero && parcelaAtual.aprovadoPor === this.zero && parcelaAtual.reprovadoPor === this.zero">
+                      AGUARDANDO APROVAÇÃO (TÉCNICA)
+                    </v-alert>
+                    <v-alert type="error" v-if="parcelaAtual.status === '0' && parcelaAtual.medicaoPor !== this.zero && parcelaAtual.aprovadoPor === this.zero && parcelaAtual.reprovadoPor !== this.zero">
+                      REPROVADO TÉCNICA
+                      Cancele ou Reinicie a parcela
+                    </v-alert>
+                    <v-alert type="warning" v-if="parcelaAtual.status === '0' && parcelaAtual.medicaoPor !== this.zero && parcelaAtual.aprovadoPor !== this.zero">
+                      AGUARDANDO PAGAMENTO
+                    </v-alert>
+                    <br />
+                    <v-list-item-subtitle v-if="parcelaAtual.abertaPor != this.zero">Aberto por {{this.identificarEndereco(parcelaAtual.abertaPor)}}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-if="parcelaAtual.medicaoPor != this.zero">Medido por {{this.identificarEndereco(parcelaAtual.medicaoPor)}}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-if="parcelaAtual.aprovadoPor != this.zero">Aprovado por {{this.identificarEndereco(parcelaAtual.aprovadoPor)}}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-if="parcelaAtual.reprovadoPor != this.zero">Reprovado por {{this.identificarEndereco(parcelaAtual.reprovadoPor)}}</v-list-item-subtitle>
+                    <v-list-item-subtitle v-if="parcelaAtual.medicaoPor != this.zero">Parcela estimada R$ {{parcelaAtual.valorParcela | currency}}</v-list-item-subtitle>
+                  </div>
                 </v-list-item-content>
               </v-list-item>
             </v-card>
@@ -77,37 +113,40 @@
               <br />
               <v-btn x-large color="" block @click="reiniciarParcela()" :loading="loading.reiniciarParcela">Reiniciar Parcela</v-btn>
               <br />
-              <v-btn x-large color="error" block @click="finalizarContrato()" :loading="loading.cancelarContrato">Cancelar Contrato</v-btn>
+              <v-btn x-large color="error" block @click="finalizarContrato()" :loading="loading.finalizarContrato">Cancelar Contrato</v-btn>
             </v-card-text>
           </v-card>
         </v-tab-item>
         <v-tab-item :value="'tab-2'" v-if="eTecnicoContratada || eTecnicoContratante">
           <v-card flat tile>
             <v-card-text>
+              Indicador Calibragem<br />
               <v-slider
                 max=2000
                 min=0
-                label="Indicador Calibragem"
+
                 @change="calcularIndicadorGeral()"
                 :color="medicao.calibragem < 1000 ? 'error' : (medicao.calibragem < 1500 ? 'warning' : 'success')"
                 v-model="medicao.calibragem"
               ></v-slider>
+              Indicador Quilometragem<br />
               <v-slider
                 max=2000
                 min=0
                 :color="medicao.quilometragem < 1000 ? 'error' : (medicao.quilometragem < 1500 ? 'warning' : 'success')"
-                label="Indicador Quilometragem"
                 @change="calcularIndicadorGeral()"
                 v-model="medicao.quilometragem"
               ></v-slider>
+              Indicador Terreno<br />
               <v-slider
                 max=2000
                 min=0
                 v-model="medicao.terreno"
                 @change="calcularIndicadorGeral()"
                 :color="medicao.terreno < 1000 ? 'error' : (medicao.terreno < 1500 ? 'warning' : 'success')"
-                label="Indicador Terreno"
+                label=""
               ></v-slider>
+              Indicador Geral<br />
               <v-slider
                 max=2000
                 min=0
@@ -116,7 +155,7 @@
                 loading="medicao.loading"
                 :color="medicao.indicador < 1000 ? 'error' : (medicao.indicador < 1500 ? 'warning' : 'success')"
                 @change="calcularIndicadorGeral()"
-                label="Indicador Geral"
+                label=""
               ></v-slider>
 
               <v-btn
@@ -170,6 +209,8 @@ import SMC from '../lib/SMC';
 export default {
   data () {
       return {
+        zero: '0x0000000000000000000000000000000000000000',
+        contratoEncerrado: false,
         smc: {
           custodiaBRLT: '',
           valorParcela: 0,
@@ -187,13 +228,18 @@ export default {
           indicador: 0,
           loading: false
         },
+        parcelaAtual: {
+
+        },
         eContratada: false,
         eContratante: false,
         eTecnicoContratada: false,
         eTecnicoContratante: false,
         eArbitro: false,
         medicaoAtual: null,
-        enderecos: {},
+        enderecos: {
+          carregado: false
+        },
         value: 5,
         loading: {
           abrirParcela: false,
@@ -213,18 +259,14 @@ export default {
     const smc = new SMC();
     smc.getEvents().allEvents().on('data', e => {
       console.log(e);
+      this.carregarInformacoes();
       switch (e.event) {
         case 'ParcelaFinalizada':
         case 'MedicaoRealizada':
         case 'ParcelaReiniciada':
           this.carregarMedicao();
           break;
-        case 'ParcelaAberta':
-        case 'CustodiaAlterada':
-          this.carregarInformacoes();
-          break;
         default:
-
       }
     })
   },
@@ -239,15 +281,56 @@ export default {
       this.smc.parcelaAtual = await smc.obterParcelaAtual();
 
       await this.carregarMedicao();
+      await this.obterInformacoesParcelaAtual();
+      await this.obterInformacoesParcelaAtual();
+
+      try {
+        this.contratoEncerrado = await smc.obterContratoEncerrado();
+      } catch (e) {
+      }
 
       try {
         this.enderecos = await smc.obterEnderecos();
+        this.enderecos.carregado = true;
         this.eContratada = this.enderecos.contratada.toString().toUpperCase() === this.account.publicKey.toUpperCase();
         this.eContratante = this.enderecos.contratante.toString().toUpperCase() === this.account.publicKey.toUpperCase();
         this.eTecnicoContratada = this.enderecos.tecnicoContratada.toString().toUpperCase() === this.account.publicKey.toUpperCase();
         this.eTecnicoContratante = this.enderecos.tecnicoContratante.toString().toUpperCase() === this.account.publicKey.toUpperCase();
         this.eArbitro = this.enderecos.arbitro.toString().toUpperCase() === this.account.publicKey.toUpperCase();
       } catch (e) {
+      }
+    },
+
+    identificarEndereco (endereco) {
+      if (endereco && this.enderecos.carregado) {
+        switch (endereco.toUpperCase()) {
+          case this.enderecos.contratada.toUpperCase():
+            return 'Contratada';
+          case this.enderecos.contratante.toUpperCase():
+            return 'Contratante';
+          case this.enderecos.tecnicoContratada.toUpperCase():
+            return 'Técnico (Contratada)';
+          case this.enderecos.tecnicoContratante.toUpperCase():
+            return 'Técnico (Contratante)';
+          case this.enderecos.arbitro.toUpperCase():
+            return 'Árbitro';
+          default:
+        }
+      }
+    },
+
+    async obterInformacoesParcelaAtual() {
+      const smc = new SMC();
+
+      try {
+        this.parcelaAtual = await smc.obterInformacoesParcelaAtual();
+        try {
+          this.parcelaAtual.valorParcela = await smc.calcularParcela();
+        } catch (e) {
+
+        }
+      } catch (e) {
+        alert(e);
       }
     },
 

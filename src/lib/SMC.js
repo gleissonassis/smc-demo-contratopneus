@@ -18,6 +18,10 @@ class SMC {
     return parseInt(await this.smc.methods.parcelaAtual().call()) + 1;
   }
 
+  async obterInformacoesParcelaAtual () {
+    return await this.smc.methods.obterParcelaAtual().call();
+  }
+
   getEvents () {
     return this.smcWS.events;
   }
@@ -30,6 +34,10 @@ class SMC {
       tecnicoContratante: await this.smc.methods.tecnicoContratante().call(),
       arbitro: await this.smc.methods.arbitro().call()
     }
+  }
+
+  async obterContratoEncerrado () {
+    return await this.smc.methods.contratoEncerrado().call();
   }
 
   async obterNumeroParcelas () {
@@ -53,7 +61,7 @@ class SMC {
   }
 
   async calcularParcela() {
-    return await this.smc.methods.calcularParcela().call();
+    return (await this.smc.methods.calcularParcela().call()) / 10000;
   }
 
   async calcularIndicador (calibragem, quilometragem, terreno) {
@@ -119,7 +127,7 @@ class SMC {
   }
 
   async finalizarContrato (publicKey, privateKey) {
-    return await this.enviarTransaction(publicKey, privateKey, this.smc.methods.reiniciarParcela().encodeABI());
+    return await this.enviarTransaction(publicKey, privateKey, this.smc.methods.finalizarContrato().encodeABI());
   }
 }
 

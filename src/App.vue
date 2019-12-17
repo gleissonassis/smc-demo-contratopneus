@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar app>
       <v-toolbar-title class="headline text-uppercase">
-        <span>RHI MAGNESITA</span>
+        <span>GOODMONTH</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn
@@ -12,7 +12,7 @@
       >
 
 
-        <span class="mr-2">CRIPTONOMIA</span>
+        <span class="mr-2">LOCALIZESSE</span>
       </v-btn>
     </v-app-bar>
 

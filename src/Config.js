@@ -8,8 +8,8 @@
 }*/
 
 export default {
-  brltMoneyContractAddress: "0x141F2E38483b1880C363C5E036036F085b78620c",
-  smcContractAddress: "0xa8eA5BA8672404F8872D53d3060195FB04E0d29f",
+  brltMoneyContractAddress: "0xBCc51F49D32eE65B194E7f50d2e68Cfc26217ba7",
+  smcContractAddress: "0x89662F9Edb5E846F1A375ACC856D402FF2a9c92F",
   rpcUrl: "https://ropsten.infura.io/v3/971cb825f16b4607acc7349a1ca350ab",
   wsRPCUrl: "wss://ropsten.infura.io/ws",
   gasLimit: 400000,
